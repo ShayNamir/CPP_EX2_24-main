@@ -1,55 +1,77 @@
 /*
-This class is a template class that represents a graph. It is implemented using an matrix of vertices.
+ID: 207192246
+Email: ShayNamir@gmail.com
 */
-#include <iostream>
+#ifndef GRAPH_HPP
+#define GRAPH_HPP
+
 #include <vector>
+#include <iostream>
+#include <utility>
 using namespace std;
-namespace ariel{
-    class Graph{
-        private:
-            vector<vector<int>> matrix;
-        public:
-            void loadGraph(const vector<vector<int>>& matrix);// Function to load a graph from a matrix
-            void printGraph();// Function to print the adjacency matrix of the graph
-            size_t getVertexNum()const;//return the number of vertices in the graph
-            bool isDirected();//return true if the graph is directed, otherwise return false
-            int getEdgeNum();//return the number of edges in the graph
-            int getEdge(size_t i, size_t j)const;//return the value of the edge between vertex i and vertex j
-            vector<size_t> getNeighbors(size_t node);
-            
-            //Overloading operators
-            Graph operator+(const Graph& other);//+
-            Graph operator+=(const Graph& other);//+=
-            Graph operator+()const;//Unary +
-            Graph operator-(const Graph& other);//-
-            Graph operator-=(const Graph& other);//-=
-            Graph operator-();//Unary -
 
-            //Equality operators
-            bool operator==(const Graph& other);//==
-            bool operator!=(const Graph& other);//!=
-            Graph operator>(const Graph& other);//>
-            Graph operator>=(const Graph& other);//>=
-            Graph operator<(const Graph& other);//<
-            Graph operator<=(const Graph& other);//<=
+namespace ariel
+{
+    class Graph
+    {
+       private:
+        vector<vector<int>> matrix;
+        bool directed;
 
-            //++
-            Graph operator++();//Pre-increment
-            Graph operator++(int);//Post-increment
-            //--
-            Graph operator--();//Pre-decrement
-            Graph operator--(int);//Post-decrement
+       public:
 
-            //Multiplication operators
-            Graph operator*(const Graph& other);//* vector multiplication
-            Graph operator*=(const Graph& other);//*= vector multiplication
-            Graph operator*(int scalar);//* scalar multiplication
-            Graph operator*=(int scalar);//*= scalar multiplication
-            Graph operator/(int scalar);// / scalar division
-            Graph operator/=(int scalar);// /= scalar division
+        void loadGraph(vector<vector<int>> adjMatrix);
+        string printGraph(); // Print the graph.
+        size_t getNumberOfEdges();
+        int getWeight(int start, int end); // Get the value of an edge.
+        vector<size_t> getNeighbors(size_t vertex);
+        bool isDirected(); 
+        size_t getNumberOfVertices();
+        vector<vector<int>> getMatrix() const {return matrix;}
+        vector<pair<int,pair<int, int>>> getEdges() const;
+        bool isEdge(size_t from, size_t to) { return matrix[from][to] != 0;} // Check if there is an edge between two vertices.
+        bool hasNegativeWeight(); 
+        void setDirect(bool directed); 
+        int getEdge(unsigned int s, unsigned int t);
+        unsigned int getNumV() const{ return matrix.size(); }
 
-            //Print the graph
-            friend ostream& operator<<(ostream& os, const Graph& g);
+        // Arithmetic operators
+        Graph operator+( Graph &g); 
+        Graph operator+=( Graph &g);
+        Graph operator+() ; // Unary plus operator. 
+        Graph operator-( Graph &g); 
+        Graph operator-=( Graph &g); 
+        Graph operator-() ; // Unary minus operator.
 
-    };
+        //comparison operators
+        bool operator==( Graph &g); 
+        bool operator!=( Graph &g); 
+        bool operator<( Graph &g); 
+        bool operator<=( Graph &g); 
+        bool operator>( Graph &g);
+        bool operator>=( Graph &g); 
+
+        // Assignment operators
+        Graph operator++(); //i ++
+        Graph operator++(int); //++ i
+        Graph operator--(); // i --
+        Graph operator--(int); // -- i
+
+        // Multiplication operators
+        Graph operator*(int scalar); 
+        Graph operator*=( int scalar); 
+        Graph operator*( Graph &g); 
+        Graph operator*=( Graph &g); 
+
+        // Division operators
+        Graph operator/(int scalar); 
+        Graph operator/=(int scalar); 
+        Graph operator/( Graph &g); 
+        Graph operator/=( Graph &g); 
+
+        friend ostream& operator<<(ostream &out,Graph &g); // Print the matrix.
+        friend Graph operator*(int scalar, Graph &g); // Multiply a acalar by a matrix.
+    };    
 }
+
+#endif

@@ -1,270 +1,393 @@
 /*
-207192246
-ShayNamir@gmail.com
+ID: 207192246
+Email: ShayNamir@gmail.com
 */
-#define WHITE -1
-#define GRAY 0
-#define BLACK 1
 
 #include "Algorithms.hpp"
-#include "Graph.hpp"
 #include <queue>
-#include <algorithm>
+#include <limits>
 #include <climits>
+#include <algorithm>
+
 
 using namespace ariel;
 using namespace std;
 
-static bool isPartOfC(size_t vertex, vector<bool>& visited, vector<bool>& recStack, vector<size_t>& parent, ariel::Graph& g, vector<size_t>& cycle);
+// Perform a depth-first search (DFS) traversal of the graph starting from the given vertex
+void Algorithms::dfs(Graph graph, size_t vertex, vector<bool>& visited)
+{
+    // Mark the current vertex as visited
+    visited[vertex] = true;
 
+    // Get the neighbors of the current vertex
+    vector<size_t> neighbors = graph.getNeighbors(vertex);
 
-bool Algorithms::isConnected(Graph g){
-    if(g.getVertexNum()==0)
-        return false;//Error
-
-    vector<bool> visited(g.getVertexNum(), false);
-    DFS(g, 0, visited);
-
-    for (size_t i = 0; i < visited.size(); i++) {
-        if (!visited[i]) {
-            return false;
+    // Recursively visit all unvisited neighbors
+    for (size_t neighbor : neighbors)
+    {
+        if (!visited[neighbor])
+        {
+            dfs(graph, neighbor, visited);
         }
     }
-    return true;//The graph is connected
-}
-/*
-This function will return the shortest path between two vertices in the graph.
-Example:
-    0 1 0
-    1 0 1
-    0 1 0
-    shortestPath(g, 0, 2) -> 0->1->2
-*/
-string Algorithms::shortestPath(Graph g, size_t src, size_t dest) {
-    size_t numNodes = g.getVertexNum(); // Get the number of nodes in the graph
-    vector<int> dist(numNodes, INT_MAX); // Initialize all distances as infinity
-    vector<size_t> parent(numNodes, SIZE_MAX); // Initialize all parents as not visited
-    dist[src] = 0; // Set the distance of the source node as 0
-    queue<size_t> q; // Initialize the queue
-    q.push(src); // Push the source node to the queue
-    while (!q.empty()) {
-        size_t node = q.front(); // Get the front of the queue
-        q.pop(); // Pop the front of the queue
-        vector<size_t> neighbors = g.getNeighbors(node); // Get the neighbors of the current node
-        for (size_t i = 0; i < neighbors.size(); i++) {
-            if (dist[neighbors[i]] == INT_MAX) { // If the neighbor is not visited
-                dist[neighbors[i]] = dist[node] + 1; // Update the distance of the neighbor
-                parent[neighbors[i]] = node; // Update the parent of the neighbor
-                q.push(neighbors[i]); // Push the neighbor to the queue
-            }
-        }
-    }
-    if (dist[dest] == INT_MAX) { // If the destination node is not visited
-        return "-1"; // There is no path between the source and destination nodes
-    }
-    vector<size_t> path; // Initialize the path vector
-    size_t current = dest;
-    while (current != SIZE_MAX) {
-        path.push_back(current);
-        current = parent[current];
-    }
-    reverse(path.begin(), path.end()); // Reverse the path vector
-    string result = "";
-    for (size_t i = 0; i < path.size(); i++) {
-        result += to_string(path[i]);
-        if (i < path.size() - 1) {
-            result += "->";
-        }
-    }
-    return result;
 }
 
+// Check if the graph is connected by check directed or undirected graph and return true if the graph is connected
+bool Algorithms::isConnected(Graph graph)
+        {
+            // Get the number of vertices in the graph
+            size_t numVertices = graph.getNumberOfVertices();
 
-/*
-This function will return true if the graph contains a cycle, and false otherwise.
-for example:
-    0 1 0
-    1 0 1
-    0 1 0
-    isContainsCycle(g) -> false
-*/
-bool Algorithms::isContainsCycle(Graph g){
-    
-    if(g.getVertexNum()==0)
-        return false;//Error
+            if (!graph.isDirected())
+            {
+                // Create a visited array to keep track of visited vertices
+                vector<bool> visited(numVertices, false);
 
-    size_t numNodes = g.getVertexNum(); // Get the number of nodes in the graph
-    vector<bool> visited(numNodes, false); // Initialize all nodes as not visited
-    vector<bool> recStack(numNodes, false); // Initialize all nodes as not part of the recursion stack
-    vector<size_t> parent(numNodes, SIZE_MAX); // Initialize all parents as not visited
-    vector<size_t> cycle; // Initialize the cycle vector
-    for (size_t i = 0; i < numNodes; i++) {
-        if (!visited[i] && isPartOfC(i, visited, recStack, parent, g, cycle)) {
-            return true;
-        }
-    }
-    return false;
-}
-/*
-Function isPartOfC
-This function will return true if the vertex is part of the cycle, and false otherwise.
-For example:
-    0 1 1 0 0
-    1 0 1 0 0
-    1 1 0 1 0
-    0 0 1 0 0
-    0 0 0 0 0
-    isPartOfC(0, visited, recStack, parent, g, cycle) -> true
-*/
-bool Algorithms::isPartOfC(size_t vertex, vector<bool>& visited, vector<bool>& recStack, vector<size_t>& parent, Graph& g, vector<size_t>& cycle){
-    if (!visited[vertex]) {
-        visited[vertex] = true;
-        recStack[vertex] = true;
-        vector<size_t> neighbors = g.getNeighbors(vertex);
-        for (size_t i = 0; i < neighbors.size(); i++) {
-            if (!visited[neighbors[i]] && isPartOfC(neighbors[i], visited, recStack, parent, g, cycle)) {
-                parent[neighbors[i]] = vertex;
-                return true;
-            } else if (recStack[neighbors[i]]) {
-                parent[neighbors[i]] = vertex;
-                size_t current = vertex;
-                cycle.push_back(current);
-                current = parent[current];
-                while (current != vertex) {
-                    cycle.push_back(current);
-                    current = parent[current];
+                // Perform DFS starting from the first vertex
+                dfs(graph, 0, visited);
+
+                // Check if all vertices have been visited
+                for (bool v : visited)
+                {
+                    if (!v)
+                        return false;
                 }
-                cycle.push_back(vertex);
+
+                return true;
+            }
+            else
+            {
+                // Create a visited array to keep track of visited vertices
+                vector<bool> visited(numVertices, false);
+
+                // Perform DFS on all vertices
+                for (size_t i = 0; i < numVertices; i++)
+                {
+                    dfs(graph, i, visited);
+                    for (bool v : visited)
+                    {
+                        if (!v)
+                        {
+                            // maybe its weakly connected
+                            graph.setDirect(false);
+                            if (isConnected(graph) == false)
+                            {
+                                return false;
+                            }
+                            return true;
+                        }
+                    }
+                    visited.assign(numVertices, false); // Reset the visited array
+                }
+                return true;
+            }
+        }
+
+// Check if the graph is bipartite by using the Breadth-First Search (BFS) algorithm
+string Algorithms::isBipartite(Graph grp) 
+{
+
+    size_t numNodes = grp.getNumberOfVertices(); // Get the number of nodes in the graph
+    vector<int> colorArr(numNodes, -1); // Initialize all nodes as not colored
+    vector<size_t> setA, setB; // Initialize the two sets A and B  to store the nodes
+
+    for (size_t i = 0; i < numNodes; i++) 
+    {
+        if (colorArr[i] == -1) // If the node is not colored
+         {
+            queue<size_t> q; // Initialize a queue to store the nodes
+            q.push(i);
+            colorArr[i] = 1; // Color the node with color 1
+
+            while (!q.empty()) 
+            {
+                size_t u = q.front(); // Get the first node in the queue
+                q.pop(); // Remove the first node from the queue
+                vector<size_t> neighbors = grp.getNeighbors(u); // Get the neighbors of the current node
+
+                for (size_t v: neighbors)  // Loop through the neighbors of the current node
+                {
+                    if (colorArr[v] == -1) // If the neighbor is not colored
+                    {
+                        colorArr[v] = 1 - colorArr[u]; // Color the neighbor with the opposite color of the current node
+                        q.push(v); 
+                    } 
+                    else if (colorArr[v] == colorArr[u]) // If the neighbor has the same color as the current node
+                    {
+                        return "0"; // The graph is not bipartite
+                    }
+                }
+            }
+        }
+    }
+
+    // The graph is bipartite and we need to store the nodes in the two sets A and B
+    for (size_t i = 0; i < numNodes; i++) // Loop through all the nodes
+    {
+        if (colorArr[i] == 1) // If the node is colored with color 1
+        {
+            setA.push_back(i);
+        } 
+        else // If the node is colored with color 0
+        {
+            setB.push_back(i);
+        }
+    }
+
+    // Create a string representation of the two sets A and B
+    string result = "The graph is bipartite: A={";
+    for (size_t i = 0; i < setA.size(); i++) 
+    {
+        result += std::to_string(setA[i]);
+        if (i != setA.size() - 1) 
+        {
+            result += ", ";
+        }
+    }
+
+    result += "}, B={";
+    for (size_t i = 0; i < setB.size(); i++) 
+    {
+        result += std::to_string(setB[i]);
+        if (i != setB.size() - 1) 
+        {
+            result += ", ";
+        }
+    }
+    result += "}";
+
+    return result; // Return the result string representation of the two sets A and B
+}
+
+// the function return the shortest path between two nodes in the graph by using the Bellman-Ford algorithm
+string Algorithms::shortestPath(Graph grp, size_t start, size_t end) 
+{
+    size_t numNodes = grp.getNumberOfVertices(); // Get the number of nodes in the graph
+    vector<int> dist(numNodes, numeric_limits<int>::max()); // Initialize all nodes with infinite distance
+    vector<size_t> pred(numNodes, numeric_limits<size_t>::max()); // Initialize all parents of the nodes as max value
+    dist[start] = 0;
+
+    // Relax all edges |V| - 1 times
+    bool updated = false;
+    for (size_t i = 0; i < numNodes - 1; i++) 
+    {
+        updated = false;
+        for (auto edge : grp.getEdges()) 
+        {
+            size_t u = static_cast<size_t>(edge.first); // Get the first node of the edge
+            size_t v = static_cast<size_t>(edge.second.first); // Get the second node of the edge
+            int weight = edge.second.second;
+            if (dist[u] != numeric_limits<int>::max() && dist[u] + weight < dist[v]) // If there is a shorter path
+            {
+                dist[v] = dist[u] + weight;
+                pred[v] = u;
+                updated = true; // bool variable to check if there is an update
+            }
+        }
+        if (!updated) break; // If there is no update, then break the loop 
+    }
+
+    // Check for negative-weight cycles in the last iteration
+    if (updated) 
+    {
+        for (auto edge : grp.getEdges()) 
+        {
+            size_t u = static_cast<size_t>(edge.first); // Get the first node of the edge
+            size_t v = static_cast<size_t>(edge.second.first); // Get the second node of the edge
+            int weight = edge.second.second;
+            if (dist[u] != numeric_limits<int>::max() && dist[u] + weight < dist[v]) // If there is a negative cycle
+            {
+                return "The graph contains a negative cycle"; // Return if a negative cycle is found
+            }
+        }
+    }
+
+    // If there is no path between the two nodes
+    if (dist[end] == numeric_limits<int>::max()) 
+    {
+        return "-1";  // No path found
+    }
+
+    vector<size_t> path;
+    for (size_t at = end; at != start; at = pred[at]) 
+    {
+        if (at == numeric_limits<size_t>::max()) // If there is no path between the two nodes
+        {
+            return "-1";  
+        }
+        path.push_back(at);
+    }
+    path.push_back(start); // Add the start node at the end
+
+    reverse(path.begin(), path.end()); // Reverse the path vector to get the correct order
+
+    // Create a string representation of the path
+    string pathStr = to_string(path[0]);
+    for (size_t i = 1; i < path.size(); ++i) 
+    {
+        pathStr += "->" + to_string(path[i]);
+    }
+
+    return pathStr;
+}
+
+// Function to detect cycles in the graph by using the Depth-First Search (DFS) algorithm
+bool Algorithms::isCyclicUtil(size_t vertex, vector<bool>& visited, vector<bool>& recStack, vector<size_t >& parent,Graph graph, vector<size_t>& cycle)
+{
+    visited[vertex] = true; // Mark the current node as visited
+    recStack[vertex] = true; // Mark the current node as part of the recursion stack
+    bool isDirected = graph.isDirected(); // check if the graph is directed
+    size_t numNodes = graph.getNumberOfVertices(); // Get the number of nodes in the graph
+
+    // Recursively visit all unvisited neighbors
+    for (size_t i = 0; i < numNodes; i++) 
+    {
+        if (graph.isEdge(vertex, i)) // If there is an edge between the current node and its neighbor
+        {  
+            if (!visited[i]) // If the neighbor is not visited 
+            {
+                parent[i] = vertex; // Set the parent of the neighbor to the current node
+                if (isCyclicUtil(i, visited, recStack, parent, graph, cycle))  // Check if the neighbor is part of a cycle
+                {
+                    return true;
+                }
+            } 
+            // If the neighbor is visited and part of the recursion stack
+            else if ((isDirected && recStack[i]) || (!isDirected && recStack[i] && parent[vertex] != i)) 
+            {
+                // If a cycle is detected, trace back to print the cycle
+                cycle.push_back(i);
+                for (size_t p = vertex; p != i; p = parent[p]) 
+                {
+                    cycle.push_back(p);
+                }
+                cycle.push_back(i);  // Complete the cycle by adding the start node again
+                reverse(cycle.begin(), cycle.end());
+
+                // Print the cycle 
+                //cout << "The cycle is: ";
+                for (size_t j = 0; j < cycle.size(); j++) {
+                    //cout << cycle[j];
+                    //if (j < cycle.size() - 1) cout << "->";
+                }
+                //cout << endl;
                 return true;
             }
         }
     }
+
+    // Remove the current node from the recursion stack after visiting all neighbors
     recStack[vertex] = false;
     return false;
 }
-void Algorithms::DFS(Graph g, size_t src, vector<bool>& visited) {
-    if(g.getVertexNum()==0)
-        return;//Error
 
-    // Mark the current node as visited
-    visited[src] = true;
-    vector<size_t> neighbors = g.getNeighbors(src);
-    for (size_t i = 0; i < neighbors.size(); i++) {
-        if (!visited[neighbors[i]]) {
-            DFS(g, neighbors[i], visited);//Recursively visit the neighbors
-        }
-    }
-}
-/*
-This function will check if the graph is bipartite and return the string representation of the bipartite graph.
-Example:
-    0 1 2 0 0
-    1 0 3 0 0
-    2 3 0 4 0
-    0 0 4 0 5
-    0 0 0 5 0
-    isBipartite(g) -> The graph is bipartite: A={0, 2, 4}, B={1, 3}
-*/
-string Algorithms::isBipartite(Graph g){
-    size_t numV = g.getVertexNum();
-    queue<unsigned int> q;
-     vector<int> a(numV, -1);
-    vector<int> b(numV, WHITE);//colors
-    for(unsigned int i=0; i<numV; i++){
-        if(b[i] == WHITE){
-            a[i] = 0;
-            q.push(i);
-            b[i] = GRAY;
-            while(!q.empty()){
-                size_t u = q.front();
-                q.pop();
-                for(size_t v=0; v<numV; v++){
-                    if(g.getEdge(u,v) != 0){
-                        if(b[v] == WHITE){
-                            a[v] = !a[u];
-                            b[v] = GRAY;
-                            q.push(v);
-                        } 
-                        else if(v != u && a[v] == a[u]){
-                             return "0";// Not bipartite
-                        } 
-                    }
-                }
-                b[u] = BLACK;
-            }
-        }
-    }
-    string A = "";
-    string B = "";
-    for(unsigned int i=0; i<numV; i++){
-        if(a[i] == 0){ 
-            if (A.empty()) { A += to_string(i); }
-            else{ A += ", " + to_string(i); }
-        }
-        else{ 
-            if (B.empty()) { B += to_string(i); }
-            else{ B += ", " + to_string(i); }
-        }
-    }
-    return "The graph is bipartite: A={"+A+"}, B={"+B+"}";
-}
-/*
-Function to detect negative cycles in the graph by using the Bellman-Ford algorithm
-and return the string representation of the negative cycle
-*/
-string Algorithms::negativeCycle(Graph g) {
-    size_t numNodes = g.getVertexNum(); // Get the number of nodes in the graph
-    vector<int> dist(numNodes, numeric_limits<int>::max()); // Initialize all distances as infinity
-    dist[0] = 0; // Set the distance of the first node as 0
+// Function to detect cycles in the graph by using the Depth-First Search (DFS) algorithm
+bool Algorithms::isContainsCycle(Graph graph)
+{
+    
+    size_t numNodes = graph.getNumberOfVertices(); // Get the number of nodes in the graph
+
+    vector<bool> visited(numNodes, false); // Initialize all nodes as not visited
+
+    vector<bool> recStack(numNodes, false); // Initialize all nodes as not part of the recursion stack
+
     vector<size_t> parent(numNodes, SIZE_MAX); // Initialize all parents as not visited
-    size_t lastUpdated = SIZE_MAX; // Initialize the last updated node as not visited
 
-    // Relax edges for (numNodes - 1) iterations
-    for (size_t i = 0; i < numNodes - 1; i++) {
-        for (size_t j = 0; j < numNodes; j++) {
-            vector<size_t> neighbors = g.getNeighbors(j); // Get the neighbors of the current node
-            for (size_t k = 0; k < neighbors.size(); k++) {
-                if (dist[j] != numeric_limits<int>::max() && 
-                    dist[j] + g.getEdge(j, neighbors[k]) < dist[neighbors[k]]) {
-                    
-                    dist[neighbors[k]] = dist[j] + g.getEdge(j, neighbors[k]); // Update the distance of the neighbor
-                    parent[neighbors[k]] = j; // Update the parent of the neighbor
-                    lastUpdated = neighbors[k]; // Update the last updated node
-                }
+    vector<size_t> cycle; // Initialize the cycle vector
+
+    for (size_t i = 0; i < numNodes; i++) 
+    {
+        if (!visited[i])  // If the node is not visited that means it is not part of the cycle
+        {
+            if (isCyclicUtil(i, visited, recStack, parent, graph, cycle)) // Check if the node is part of a cycle
+            {
+                return true;
             }
         }
     }
+    return false;
+}
 
-    // Detect negative cycle by checking for further relaxation
-    for (size_t j = 0; j < numNodes; j++) {
-        vector<size_t> neighbors = g.getNeighbors(j);
-        for (size_t k = 0; k < neighbors.size(); k++) {
-            if (dist[j] != numeric_limits<int>::max() && 
-                dist[j] + g.getEdge(j, neighbors[k]) < dist[neighbors[k]]) {
-                
-                // Negative cycle detected, reconstruct cycle
-                vector<size_t> cycle;
-                size_t current = neighbors[k];
-                cycle.push_back(current);
-                current = parent[current];
-                while (current != neighbors[k]) {
-                    cycle.push_back(current);
-                    current = parent[current];
-                }
-                cycle.push_back(neighbors[k]);
+// Function to detect negative cycles in the graph by using the Bellman-Ford algorithm
+ string Algorithms::negativeCycle(Graph graph)
+ {
 
-                // Construct result string
-                string result = "";
-                for (size_t i = cycle.size(); i > 0; i--) {
-                    result += to_string(cycle[i - 1]);
-                    if (i > 1) {
-                        result += "->";
+    // if the graph is empty
+    if (graph.getNumberOfEdges() == 0)
+    {
+        return "the graph does not contain a negative cycle"; // An empty graph is considered not to contain a negative cycle
+    }
+
+    //if the graph dont have a negative weight
+    if (!graph.hasNegativeWeight())
+    {
+        return "the graph does not contain a negative cycle"; // A graph without negative weights is considered not to contain a negative cycle
+    }
+
+        unsigned int numV = graph.getNumberOfVertices(); // Get the number of vertices in the graph
+        
+        vector<int> dist(numV, INT_MAX); // Initialize all nodes with infinite distance
+        vector<unsigned int> parent(numV, INT_MAX); // Initialize all parents of the nodes as max value
+
+        // Relax all edges |V| - 1 times
+        for(unsigned int v=0; v<numV; v++)
+        {
+            if(dist[v] == INT_MAX){
+                dist[v] = 0;
+                for(unsigned int u=0; u<numV-1; u++)
+                {
+                    for(unsigned int i=0; i<numV; i++)
+                    {
+                        for(unsigned int j=0; j<numV; j++)
+                        {   
+                            // if there is an edge that update the distance
+                            if(graph.getEdge(i,j)!=0 && dist[j]>dist[i]+graph.getEdge(i,j)) 
+                            {
+                                if(!graph.isDirected() && parent[i] == j){ continue; }
+                                dist[j] = dist[i] + graph.getEdge(i,j);
+                                parent[j] = i;
+                            }
+                        }
                     }
                 }
-                return result;
+
+                // Check for negative-weight cycles in the last iteration
+                for(unsigned int i=0; i<numV; i++)
+                {
+                    for(unsigned int j=0; j<numV; j++)
+                    {
+                        if(!graph.isDirected() && parent[i] == j){ continue; } // if the graph is not directed and the parent is the same as the child
+
+                        // if there is a edge that update the distance
+                        if(graph.getEdge(i,j)!=0 && dist[i]!=INT_MAX && dist[j]>dist[i]+graph.getEdge(i,j))
+                        {
+                            vector<int> visited(numV, 0);
+                            dist[j] = dist[i] + graph.getEdge(i,j);
+                            parent[j] = i;
+                            string path = to_string(i); // start from end
+                            unsigned int cur = parent[i];
+                            int for_2nd_visit =0;
+
+                            // trace back to print the cycle
+                            while(cur != i)
+                            {  
+                                path = to_string(cur) + "->" + path;  
+                                visited[cur] = 1;
+                                cur = parent[cur];
+                                if(visited[cur] && !for_2nd_visit){
+                                    for_2nd_visit = 1;
+                                    path = to_string(parent[cur]);
+                                    i = parent[cur];
+                                }
+                            }
+                            path = to_string(i) + "->" + path;
+                            return "The cycle is: " + path;
+                        }
+                    }
+                }
             }
         }
+        return "the graph does not contain a negative cycle"; // Return if no negative cycle is found
     }
 
-    return "The graph does not contain a negative cycle";
-}
+

@@ -1,368 +1,701 @@
- #include "Graph.hpp"
+/*
+ID: 207192246
+Email: ShayNamir@gmail.com
+*/
+
+#include "Graph.hpp"
 #include <iostream>
-#include <vector>
-using std::vector;
-using std::invalid_argument;
+
 using namespace ariel;
+using namespace std;
 
-void Graph::loadGraph(const vector<vector<int>>& matrix) {
-    // Check if the graph is empty
-    if (matrix.empty()) {
-        throw invalid_argument("The graph cannot be empty");
-    }
-    // Check if the matrix is square
-    size_t s = matrix.size();
-    for (size_t i = 0; i < s; i++) {
-        if (matrix[i].size() != s) {
-            throw invalid_argument("The matrix must be square");
-        }
-    }
-    // If all good, load the graph
-    this->matrix = matrix;
-}
-void Graph::printGraph() {
-    //Vertex
-    int v= this->matrix.size();
+// Load the graph to the object.
+void Graph::loadGraph(vector<vector<int>> adjMatrix) 
+{
+    // Check if the graph is empty.
+    if (adjMatrix.empty()) { throw invalid_argument("The graph is empty, please enter a new graph."); } 
 
-    //Edges
-    size_t e=0;
-    for(size_t i=0;i<v;i++){
-        for(size_t j=0;j<v;j++){
-            if(this->matrix[i][j]==1)
-                e++;
+    // Check if the graph is a square matrix.
+    int size = adjMatrix.size();
+    for (const auto& row : adjMatrix) 
+    {
+        if (row.size() != size) {
+            throw std::invalid_argument("Invalid graph: The graph is not a square matrix.");
         }
     }
 
-    //Print the details for the user
-    std::cout<<"Graph with "<<v<<" vertices and "<<e<<" edges." << std::endl;
-}
-size_t Graph::getVertexNum()const {
-    return this->matrix.size();
-}
-int Graph::getEdge(size_t i, size_t j)const {
-    if ((i<0) && (i>=getVertexNum()) && (j < 0) && (j>=getVertexNum())){
-            return -1;
-        }
-        return matrix[i][j]; 
-}
-int Graph::getEdgeNum() {
-    //Vertex
-    int v= this->matrix.size();
-
-    //Edges
-    int e=0;
-    for(size_t i=0;i<v;i++){
-        for(size_t j=0;j<v;j++){
-            if(this->matrix[i][j]!=0)
-                e++;
+    // Edge from a vertex to itself.
+    for (size_t i = 0; i < adjMatrix.size(); ++i) 
+    {
+        if (adjMatrix[i][i] != 0) 
+        {
+            throw std::invalid_argument("Invalid graph: The graph has an edge from a vertex to itself.");
         }
     }
-    //If the graph is not directed, divide by 2
-    if(!isDirected())
-        e/=2;
-    return e;
+
+    //load the graph and check if it is directed
+    this->matrix = adjMatrix;
+    this->directed = isDirected();
 }
-bool Graph::isDirected(){
-    int n = this->matrix.size();
-    for(size_t i=0;i<n;i++){
-        for(size_t j=0;j<n;j++){
-            if(this->matrix[i][j]!=this->matrix[j][i])
+
+// Print the number of vertices and edges in the graph and the graph itself.
+string Graph::printGraph() 
+{
+    // Print the matrix like this: [1, 2, 3]\n[4, 5, 6]\n[7, 8, 9]
+    string result = "";
+    for (size_t i = 0; i < matrix.size(); ++i) 
+    {
+        if (i == 0) 
+        {
+            result += "[";
+        } 
+        else 
+        {
+            ///pass to the next line
+            result += "\n[";
+        }
+        for (size_t j = 0; j < matrix[i].size(); ++j) 
+        {
+            if (j == matrix[i].size() - 1) 
+            {
+                result += to_string(matrix[i][j]);
+            } 
+            else 
+            {
+                result += to_string(matrix[i][j]) + ", ";
+            }
+        }
+        result += "]";
+    }
+    return result;
+
+}
+
+// Check if the graph is directed.
+bool Graph::isDirected() 
+{
+    // Check if the graph is directed by checking if the adjacency matrix is symmetric.
+    for (size_t i = 0; i < matrix.size(); ++i) 
+    {
+        for (size_t j = 0; j < matrix[i].size(); ++j) 
+        {
+            if (matrix[i][j] != matrix[j][i])
+            {
                 return true;
+            }
         }
     }
     return false;
 }
-vector<size_t> Graph::getNeighbors(size_t node) {
+
+// Get the number of edges in the graph.
+size_t Graph::getNumberOfEdges()  
+{
+    size_t countOfEdge = 0;
+
+    for (size_t i = 0; i < matrix.size(); ++i) 
+    {
+        for (size_t j = 0; j < matrix[i].size(); ++j) 
+        {
+            if (matrix[i][j] != 0) // Check if there is an edge between two vertices.
+            {
+                countOfEdge++;
+            }
+        }
+    }
+    return countOfEdge;
+}
+
+// Get the neighbors of a vertex.
+vector<size_t> Graph::getNeighbors(size_t vertex) 
+{
     vector<size_t> neighbors;
-    for (size_t i = 0; i < this->matrix.size(); i++) {//Iterate over the row of the node
-        if (this->matrix[node][i] == 1) {
-            neighbors.push_back(i);//Add the neighbor to the vector
+    for (size_t i = 0; i < matrix[vertex].size(); ++i) 
+    {
+        if (matrix[vertex][i] != 0) // Check if there is an edge between two vertices.
+        {
+            neighbors.push_back(i);
         }
     }
     return neighbors;
 }
 
-//Overloading operators
+// Get the number of nodes in the graph.
+size_t Graph::getNumberOfVertices() { return matrix.size();}
 
-//Addition
-Graph Graph::operator+(const Graph& other) {
-    //Check if the graphs have the same size
-    if (this->matrix.size() != other.matrix.size()) {
-        throw invalid_argument("The graphs must have the same size");
+// Get the weight of an edge.
+int Graph::getWeight(int start, int end) 
+{
+    // Check if the node index is out of range.
+    if (start < 0 || static_cast<size_t>(start) >= matrix.size() || end < 0 || static_cast<size_t>(end) >= matrix.size()) 
+    {
+        throw std::out_of_range("Node index out of range");
     }
-    //Create a new graph
-    Graph newGraph;
-    newGraph.matrix = this->matrix;
-    //Add the values of the other graph to the new graph
-    for (size_t i = 0; i < this->matrix.size(); i++) {
-        for (size_t j = 0; j < this->matrix.size(); j++) {
-            newGraph.matrix[i][j] += other.matrix[i][j];
-        }
-    }
-    return newGraph;
+    return matrix[static_cast<size_t>(start)][static_cast<size_t>(end)]; // Return the weight of the edge. 
 }
 
-//Addition assignment
-Graph Graph::operator+=(const Graph& other){
-    //Check if the graphs have the same size
-    if (this->matrix.size() != other.matrix.size()) {
-        throw invalid_argument("The graphs must have the same size");
-    }
-    //Add the values of the other graph to the new graph
-    for (size_t i = 0; i < this->matrix.size(); i++) {
-        for (size_t j = 0; j < this->matrix.size(); j++) {
-            this->matrix[i][j] += other.matrix[i][j];
-        }
-    }
-    return *this;
-}
-
-//Unary plus
-Graph Graph::operator+()const {
-    return *this;
-}
-
-//Subtraction
-Graph Graph:: operator-(const Graph& other){
-    //Check if the matrix are in the same size
-    int n=this->getVertexNum();
-    if(other.matrix.size()!=n)
-        throw invalid_argument("The graphs must have the same size");
-
-    //Create a new graph
-    Graph ans;
-    ans.matrix = this->matrix;
-    for(int i=0;i<n;i++){
-        for(int j=0;j<n;j++){
-            ans.matrix[i][j]-=other.matrix[i][j];
-        }
-    }
-    return ans;
-}
-
-//Subtraction assignment
-Graph Graph::operator-=(const Graph& other){
-    //check if the graphs are in the same size
-    int n= this->getVertexNum();
-    if(n!=other.matrix.size())
-        throw invalid_argument("The graphs must have the same size");   
-    
-    for(int i=0;i<n;i++){
-        for(int j=0;j<n;j++){
-            this->matrix[i][j]-=other.matrix[i][j];
-        }
-    }
-    return *this;
-}
-
-//Unary minus
-Graph Graph:: operator-(){
-    int n=this->getVertexNum();
-    for(int i=0;i<n;i++){
-        for( int j=0;j<n;j++){
-            this->matrix[i][j]*=(-1);
-        }
-    }
-    return *this;
-}
-//Equality operators
-bool Graph::operator==(const Graph& other){
-    //case one
-    bool caseOne=true;
-    int n= other.matrix.size();
-    caseOne=n==this->getVertexNum();
-    if(caseOne){// No need if are not in the same size
-        for(int i=0;i<n;i++){
-            for(int j=0;j<n;j++){
-                if(this->matrix[i][j]!=other.matrix[i][j])
-                caseOne=false;
+// this function return the edges of the graph
+vector<pair<int,pair<int, int>>> Graph::getEdges() const {
+    vector<pair<int,pair<int, int>>> edges;
+    for (size_t i = 0; i < matrix.size(); ++i) {
+        for (size_t j = 0; j < matrix[i].size(); ++j) {
+            if (matrix[i][j] != 0) {
+                edges.push_back({i, {j, matrix[i][j]}});
             }
         }
     }
-    if(caseOne)
-        return caseOne;
+    return edges;
+}
 
-    //Case two
-    Graph temp=(*this>other);
-    bool caseTwo = temp!=*this;
-    temp = (*this<other);
-    caseTwo = caseTwo&&(temp!=other);
-    return caseTwo;
+// Check if the graph has a negative weight.
+bool Graph::hasNegativeWeight() 
+{
+    for (size_t i = 0; i < matrix.size(); ++i) 
+    {
+        for (size_t j = 0; j < matrix[i].size(); ++j) 
+        {
+            if (matrix[i][j] < 0) // Check if the weight of the edge is negative.
+            {
+                return true;
+            }
+        }
+    }
+    return false;
 }
-bool Graph::operator!=(const Graph& other){
-    bool ans = *this==other;
-    return !ans;
+
+
+// Get the weight of an edge.
+int Graph::getEdge(unsigned int s, unsigned int t)
+{   
+        // Check if the node index is out of range.
+        if (s<0 && s>=getNumV() && t < 0 && t>=getNumV())
+        {
+            return -1;
+        }
+        return matrix[s][t]; 
 }
-Graph Graph::operator>(const Graph& other){
-    //If one graph is contained in another
-    int smallN=std::min(this->getVertexNum(),other.matrix.size());
-    int bigN=std::max(this->getVertexNum(),other.matrix.size());
-    bool contained=true;
-    for (int i=0;i<smallN;i++){
-        for (int j=0;j<smallN;j++){
-            if(this->matrix[i][j]!=other.matrix[i][j])
-                contained=false;
+
+// Set the graph to be directed or not.
+void Graph::setDirect(bool directed)
+    {
+        directed = directed;
+        for (size_t i = 0; i < matrix.size(); i++)
+        {
+            for (size_t j = i; j < matrix[i].size(); j++)
+            {
+                if (!directed) // if not directed need to make the matrix symmetric
+                {
+                    if (matrix[i][j] != matrix[j][i])
+                    {
+                        if (matrix[i][j] == 0)
+                        {
+                            matrix[i][j] = matrix[j][i];
+                        }
+                        else if (matrix[j][i] == 0)
+                        {
+                            matrix[j][i] = matrix[i][j];
+                        }
+                        else
+                        {
+                            throw invalid_argument("Invalid graph: The graph is not symmetric.");
+                        }
+                    }
+                }
+            }
         }
     }
 
-    //By number of edges
-    if(this->getEdgeNum()>other.getVertexNum())
-        return *this;
-    if(this->getEdgeNum()>other.getVertexNum())
-        return other;
+// Add two matrices.
+Graph Graph::operator+( Graph &g) 
+{
+    // Check if the matrices on the same size.
+    if (matrix.size() != g.matrix.size()) 
+    {
+        throw invalid_argument("Invalid operation: The dimensions of the two matrices are not equal.");
+    }
 
-    //By the matrix size
-    if(this->matrix.size()>other.matrix.size())
-        return *this;
-
-    return other;
-}
-Graph Graph::operator<=(const Graph& other){
-    Graph ans = *this>other;
-}
-Graph Graph::operator<(const Graph& other){
-    //If one graph is contained in another
-    int smallN=std::min(this->getVertexNum(),other.matrix.size());
-    int bigN=std::max(this->getVertexNum(),other.matrix.size());
-    bool contained=true;
-    for (int i=0;i<smallN;i++){
-        for (int j=0;j<smallN;j++){
-            if(this->matrix[i][j]!=other.matrix[i][j])
-                contained=false;
+    // Add the two matrices together using Graph object a
+    Graph result;
+    result.matrix = matrix;
+    for (size_t i = 0; i < matrix.size(); ++i) 
+    {
+        for (size_t j = 0; j < matrix[i].size(); ++j) 
+        {
+            result.matrix[i][j] += g.matrix[i][j];
         }
     }
 
-    //By number of edges
-    if(this->getEdgeNum()<other.getVertexNum())
-        return *this;
-    if(this->getEdgeNum()<other.getVertexNum())
-        return other;
+    //resized the diagonal to 0
+    for (size_t i = 0; i < result.matrix.size(); ++i) 
+    {
+        result.matrix[i][i] = 0;
+    }
 
-    //By the matrix size
-    if(this->matrix.size()<other.matrix.size())
-        return *this;
-
-    return other;
-}
-Graph Graph::operator>=(const Graph& other){
-    Graph ans = *this<other;
+    return result;
 }
 
-//Increment
-Graph Graph::operator++(){
-    int n=this->getVertexNum();
-    for(int i=0;i<n;i++){
-        for(int j=0;j<n;j++){
-            this->matrix[i][j]++;
+// Add two matrices and assign the result to the first matrix.
+Graph Graph::operator+=( Graph &g) 
+{
+    // Check if the dimensions of the two matrices are equal.
+    if (matrix.size() != g.matrix.size()) 
+    {
+        throw invalid_argument("Invalid operation: The dimensions of the two matrices are not equal.");
+    }
+
+    // Add the two matrices together.
+    for (size_t i = 0; i < matrix.size(); ++i) 
+    {
+        for (size_t j = 0; j < matrix[i].size(); ++j) 
+        {
+            matrix[i][j] += g.matrix[i][j];
         }
     }
+
+    //resized the diagonal to 0
+    for (size_t i = 0; i < matrix.size(); ++i) 
+    {
+        matrix[i][i] = 0;
+    }
+
     return *this;
 }
-Graph Graph::operator++(int){
-    //Use the pre-increment operator
-    Graph ans = *this;
+
+// Unary plus operator.
+Graph Graph::operator+() { return *this; }
+
+// Subtract two matrices.
+Graph Graph::operator-( Graph &g) 
+{
+    // Check if the dimensions of the two matrices are equal.
+    if (matrix.size() != g.matrix.size()) 
+    {
+        throw invalid_argument("Invalid operation: The dimensions of the two matrices are not equal.");
+    }
+
+    // Subtract the two matrices.
+    Graph result;
+    result.matrix = matrix;
+    for (size_t i = 0; i < matrix.size(); ++i) 
+    {
+        for (size_t j = 0; j < matrix[i].size(); ++j) 
+        {
+            result.matrix[i][j] -= g.matrix[i][j];
+        }
+    }
+
+    //resized the diagonal to 0
+    for (size_t i = 0; i < result.matrix.size(); ++i) 
+    {
+        result.matrix[i][i] = 0;
+    }
+
+    return result;
+}
+
+// Subtract two matrices and assign the result to the first matrix.
+Graph Graph::operator-=( Graph &g) 
+{
+    // Check if the dimensions of the two matrices are equal.
+    if (matrix.size() != g.matrix.size()) 
+    {
+        throw invalid_argument("Invalid operation: The dimensions of the two matrices are not equal.");
+    }
+
+    // Subtract the two matrices.
+    for (size_t i = 0; i < matrix.size(); ++i) 
+    {
+        for (size_t j = 0; j < matrix[i].size(); ++j) 
+        {
+            matrix[i][j] -= g.matrix[i][j];
+        }
+    }
+
+    //resized the diagonal to 0
+    for (size_t i = 0; i < matrix.size(); ++i) 
+    {
+        matrix[i][i] = 0;
+    }
+
+    return *this;
+}
+
+// Unary minus operator.
+Graph Graph::operator-()  
+{
+    Graph result;
+    result.matrix = matrix;
+    for (size_t i = 0; i < matrix.size(); ++i) 
+    {
+        for (size_t j = 0; j < matrix[i].size(); ++j) 
+        {
+            result.matrix[i][j] = -result.matrix[i][j];
+        }
+    }
+
+    //resized the diagonal to 0
+    for (size_t i = 0; i < result.matrix.size(); ++i) 
+    {
+        result.matrix[i][i] = 0;
+    }
+
+    return result;
+}
+
+// Check if two matrices are equal.
+bool Graph::operator==( Graph &g) 
+{
+    // Check if the dimensions of the two matrices are equal.
+    if (matrix.size() != g.matrix.size()) 
+    {
+        return false;
+    }
+
+    // Check if the two matrices are equal.
+    for (size_t i = 0; i < matrix.size(); ++i) 
+    {
+        for (size_t j = 0; j < matrix[i].size(); ++j) 
+        {
+            if (matrix[i][j] != g.matrix[i][j]) 
+            {
+                return false;
+            }
+        }
+    }
+    return true;
+}
+
+// Check if two matrices are not equal.
+bool Graph::operator!=( Graph &g) { return !(*this == g); }
+
+// Check if the first matrix is less than the second matrix.
+bool Graph::operator<( Graph &g) 
+{
+    // Check if the Graph object has more vertices than the other Graph object.
+    if (getNumberOfVertices() > g.getNumberOfVertices())
+    {
+        return false;
+    }
+
+    // Check if the Graph object is contained in the other Graph object.
+    if(getNumberOfVertices() < g.getNumberOfVertices())
+    {
+        for (size_t i = 0; i < matrix.size(); ++i) 
+        {
+            for (size_t j = 0; j < matrix[i].size(); ++j) 
+            {
+                if (matrix[i][j] != 0 && g.matrix[i][j] == 0) // Check if there is an edge between two vertices in the first graph and if there is no edge between two vertices in the second graph. 
+                {
+                    return false;
+                }
+            }
+        }
+    }
+
+    // Check if the number of edges in the first graph is less than the number of edges in the second graph.
+    if (getNumberOfEdges() > g.getNumberOfEdges()) 
+    {
+        return false;
+    }
+
+    return true;
+}
+
+// Check if the first matrix is less than or equal to the second matrix.
+bool Graph::operator<=( Graph &g) { return *this < g || *this == g; }
+
+// Check if the first matrix is greater than the second matrix.
+bool Graph::operator>( Graph &g) { return !(*this <= g); }
+
+// Check if the first matrix is greater than or equal to the second matrix.
+bool Graph::operator>=( Graph &g) { return !(*this < g); }
+
+// increment operator (before the variable)
+Graph Graph::operator++() 
+{
+    for (size_t i = 0; i < matrix.size(); ++i) 
+    {
+        for (size_t j = 0; j < matrix[i].size(); ++j) 
+        {
+            if (i != j && matrix[i][j] != 0) // Check if the edge is not from a vertex to itself and if there is an edge between two vertices.
+            {
+            matrix[i][j]++;
+            }
+        }
+    }   
+    return *this;
+}
+
+// increment operator (after the variable)
+Graph Graph::operator++(int) 
+{
+    Graph temp = *this;
     ++*this;
-    return ans;
+    return temp;
 }
-//Decrement
-Graph Graph::operator--(){
-    int n=this->getVertexNum();
-    for(int i=0;i<n;i++){
-        for(int j=0;j<n;j++){
-            this->matrix[i][j]--;
+
+// decrement operator (before the variable)
+Graph Graph::operator--() 
+{
+    for (size_t i = 0; i < matrix.size(); ++i) 
+    {
+        for (size_t j = 0; j < matrix[i].size(); ++j) 
+        {
+            if (i != j && matrix[i][j] != 0) // Check if the edge is not from a vertex to itself and if there is an edge between two vertices.
+            {
+            matrix[i][j]--;
+            }
         }
     }
     return *this;
 }
-Graph Graph::operator--(int){
-    //Use the pre-decrement operator
-    Graph ans = *this;
+
+// decrement operator (after the variable)
+Graph Graph::operator--(int) 
+{
+    Graph temp = *this;
     --*this;
-    return ans;
+    return temp;
 }
 
-//Multiplication operators
-Graph Graph::operator*(const Graph& other){
-    //Matrix multiplication
-    int n=this->getVertexNum();
-    if(n!=other.matrix.size())
+// Multiply a matrix by a scalar.
+Graph Graph::operator*(int scalar) 
+{
+    Graph result;
+    result.matrix = matrix;
+    for (size_t i = 0; i < matrix.size(); ++i) 
+    {
+        for (size_t j = 0; j < matrix[i].size(); ++j) 
+        {
+            result.matrix[i][j] *= scalar;
+        }
+    }
+    return result;
+}
+
+// Multiply a matrix by a scalar and assign the result to the matrix.
+Graph Graph::operator*=(int scalar) 
+{
+    for (size_t i = 0; i < matrix.size(); ++i) 
+    {
+        for (size_t j = 0; j < matrix[i].size(); ++j) 
+        {
+            matrix[i][j] *= scalar;
+        }
+    }
+    return *this;
+}
+
+// Multiply two matrices.
+Graph Graph::operator*( Graph &g) 
+{
+    size_t adj_length = matrix.size();
+    size_t adj_width = matrix[0].size();
+    size_t g_length = g.matrix.size();
+    size_t g_width = g.matrix[0].size();
+    
+    // Check if the number of columns in the first matrix is equal to the number of rows in the second matrix.
+    if (adj_width != g_length) 
+    {
         throw invalid_argument("The number of columns in the first matrix must be equal to the number of rows in the second matrix.");
-    Graph ans;
-    //No need to resize the matrix because the matrix is square
-    for(int i=0;i<n;i++){
-        ans.matrix[i].resize(n);
-        for(int j=0;j<n;j++){
-            ans.matrix[i][j]=0;
-            for(int k=0;k<n;k++){
-                ans.matrix[i][j]+=this->matrix[i][k]*other.matrix[k][j];
+    }
+
+    // Multiply the two matrices.
+    Graph result;
+    result.matrix.resize(adj_length, vector<int>(g_width, 0));
+
+    for (size_t i = 0; i < adj_length; ++i) 
+    {
+        for (size_t j = 0; j < g_width; ++j) 
+        {
+            for (size_t k = 0; k < adj_width; ++k) 
+            {
+                result.matrix[i][j] += matrix[i][k] * g.matrix[k][j];
             }
         }
     }
-    return ans;
+
+    // put 0 in the diagonal
+    for (size_t i = 0; i < result.matrix.size(); ++i) 
+    {
+        result.matrix[i][i] = 0;
+    }
+
+    return result;
+
 }
-Graph Graph::operator*=(const Graph& other){
-    //Use the multiplication operator
-    *this = *this * other;
-    return *this;
-}
-Graph Graph::operator*(int scalar){
-    //Multiply the matrix by a scalar
-    int n=this->getVertexNum();
-    for(int i=0;i<n;i++){
-        for(int j=0;j<n;j++){
-            this->matrix[i][j]*=scalar;
+
+// Multiply two matrices.
+Graph Graph::operator*=( Graph &g) 
+{
+    // Check if the dimensions of the two matrices are equal.
+    if (matrix.size() != g.matrix.size()) 
+    {
+        throw invalid_argument("Invalid operation: The dimensions of the two matrices are not equal.");
+    }
+
+    // Multiply the two matrices.
+    for (size_t i = 0; i < matrix.size(); ++i) 
+    {
+        for (size_t j = 0; j < matrix[i].size(); ++j) 
+        {
+            matrix[i][j] *= g.matrix[i][j];
         }
     }
     return *this;
 }
-Graph Graph::operator*=(int scalar){
-    //Use the multiplication operator
-    *this = *this * scalar;
-    return *this;
+
+// Divide a matrix by a scalar.
+Graph Graph::operator/(int scalar) 
+{
+    // Check if the scalar is zero.
+    if (scalar == 0) 
+    {
+        throw invalid_argument("Invalid operation: Division by zero.");
+    }
+
+    // Divide the matrix by the scalar.
+    Graph result;
+    result.matrix = matrix;
+    for (size_t i = 0; i < matrix.size(); ++i) 
+    {
+        for (size_t j = 0; j < matrix[i].size(); ++j) 
+        {
+            result.matrix[i][j] /= scalar;
+        }
+    }
+    return result;
 }
-//Division
-Graph Graph::operator/(int scalar){
-    //Divide the matrix by a scalar
-    int n=this->getVertexNum();
-    for(int i=0;i<n;i++){
-        for(int j=0;j<n;j++){
-            this->matrix[i][j]/=scalar;
+
+// Divide a matrix by a scalar and assign the result to the matrix.
+Graph Graph::operator/=(int scalar) 
+{
+    // Check if the scalar is zero.
+    if (scalar == 0) 
+    {
+        throw invalid_argument("Invalid operation: Division by zero.");
+    }
+
+    // Divide the matrix by the scalar.
+    for (size_t i = 0; i < matrix.size(); ++i) 
+    {
+        for (size_t j = 0; j < matrix[i].size(); ++j) 
+        {
+            matrix[i][j] /= scalar;
         }
     }
     return *this;
 }
-Graph Graph::operator/=(int scalar){
-    //Use the division operator
-    *this = *this / scalar;
-    return *this;
-}
 
-//Print the graph
-#include <iostream> // Include the necessary header file
+// Divide two matrices.
+Graph Graph::operator/( Graph &g) 
+{
+    // Check if the dimensions of the two matrices are equal.
+    if (matrix.size() != g.matrix.size()) 
+    {
+        throw invalid_argument("Invalid operation: The dimensions of the two matrices are not equal.");
+    }
 
-std::ostream& operator<<(std::ostream& os, const Graph& g){
-    /*
-    the matrix:
-    {0, 1, 0},
-    {1, 0, 1},
-    {0, 1, 0}};
-    will print: [0, 1, 0], [1, 0, 1], [0, 1, 0]
-    */
-   int n=g.getVertexNum();
-    os << "[";
-    for (size_t i = 0; i < n; i++) {
-        os << "[";
-        for (size_t j = 0; j < n; j++) {
-            os << g.getEdge(i, j);
-            if (j != n - 1) {
-                os << ", ";
+    // Divide the two matrices.
+    Graph result;
+    result.matrix = matrix;
+    for (size_t i = 0; i < matrix.size(); ++i) 
+    {
+        for (size_t j = 0; j < matrix[i].size(); ++j) 
+        {
+            // Check if the scalar is zero.
+            if (g.matrix[i][j] == 0) 
+            {
+                throw invalid_argument("Invalid operation: Division by zero.");
             }
-        }
-        os << "]";
-        if (i != n - 1) {
-            os << ", ";
+            result.matrix[i][j] /= g.matrix[i][j];
         }
     }
-    os << "]";
-    return os;
+    return result;
 }
+
+// Divide two matrices and assign the result to the matrix.
+Graph Graph::operator/=( Graph &g) 
+{
+    // Check if the dimensions of the two matrices are equal.
+    if (matrix.size() != g.matrix.size()) 
+    {
+        throw invalid_argument("Invalid operation: The dimensions of the two matrices are not equal.");
+    }
+
+    // Divide the two matrices.
+    for (size_t i = 0; i < matrix.size(); ++i) 
+    {
+        for (size_t j = 0; j < matrix[i].size(); ++j) 
+        {
+            // Check if the scalar is zero.
+            if (g.matrix[i][j] == 0) 
+            {
+                throw invalid_argument("Invalid operation: Division by zero.");
+            }
+            matrix[i][j] /= g.matrix[i][j];
+        }
+    }
+    return *this;
+}
+
+
+// friend functions
+namespace ariel
+{
+
+    // Print the matrix using the << operator (friend function).
+    ostream& operator<<(ostream& out, Graph& g) 
+    {
+        for (size_t i = 0; i < g.getMatrix().size(); ++i) 
+        {
+            if (i == 0) 
+            {
+                out << "[";
+            } 
+            else 
+            {
+                out << ", [";
+            }
+            for (size_t j = 0; j < g.getMatrix()[i].size(); ++j) 
+            {
+                if (j == g.getMatrix()[i].size() - 1) 
+                {
+                    out << g.getMatrix()[i][j];
+                } 
+                else 
+                {
+                    out << g.getMatrix()[i][j] << ", ";
+                }
+            }
+            out << "]";
+        }
+        out << endl;
+        return out;
+    }
+
+// Read the matrix using the >> operator (friend function).
+istream& operator>>(istream &in, Graph &g) 
+{
+    for (size_t i = 0; i < g.getMatrix().size(); ++i) 
+    {
+        for (size_t j = 0; j < g.getMatrix()[i].size(); ++j) 
+        {
+            in >> g.getMatrix()[i][j];
+        }
+    }
+    return in;
+}
+
+// Multiply a matrix by a scalar outside the class(friend function).
+Graph operator*(int scalar, Graph &g) { return g * scalar; }
+
+// Divide a matrix by a scalar outside the class(friend function).
+//Graph operator/(int scalar, Graph &g) { return g / scalar; }
+
+}
+
+
+
+
+

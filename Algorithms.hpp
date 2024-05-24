@@ -1,23 +1,32 @@
 /*
-207192246
-ShayNamir@gmail.com
+ID: 207192246
+Email: ShayNamir@gmail.com
 */
-#pragma once
+
+#ifndef ALGORITHMS_HPP
+#define ALGORITHMS_HPP
+
 #include "Graph.hpp" 
-#include <vector>
 #include <string>
+#include <vector>
+using namespace std; 
 
-namespace ariel {
-    class Algorithms {
-    private:
-        static void DFS(Graph g, size_t v, std::vector<bool>& visited);
-        static bool isPartOfC(size_t vertex, std::vector<bool>& visited, std::vector<bool>& recStack, std::vector<size_t>& parent, Graph& g, std::vector<size_t>& cycle);
 
-    public:
-        static bool isConnected(Graph g);
-        static std::string shortestPath(Graph g, size_t src, size_t dest);
-        static bool isContainsCycle(Graph g);
-        static std::string isBipartite(Graph g);
-        static std::string negativeCycle(Graph g);
-    };
+namespace ariel
+{
+        class Algorithms
+        {
+                public:
+                static bool isConnected(Graph graph); // Check if the graph is connected
+                static string shortestPath(Graph graph, size_t start, size_t end); // Find the shortest path between two vertices
+                static bool isContainsCycle(Graph graph); // Check if the graph contains a cycle
+                static string isBipartite(Graph graph); // Check if the graph is bipartite
+                static string negativeCycle(Graph graph); // Check if the graph contains a negative cycle
+
+                static void dfs(Graph graph, size_t vertex, vector<bool>& visited); // Depth First Search
+                static bool isCyclicUtil(size_t vertex, vector<bool>& visited, vector<bool>& recStack, vector<size_t >& parent, const Graph graph, vector<size_t>& cycle); // Check if the graph contains a cycle
+         };
+               
 }
+
+#endif // ALGORITHMS_HPP
